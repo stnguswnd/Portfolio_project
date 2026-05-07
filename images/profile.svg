@@ -1,0 +1,17 @@
+<svg width="640" height="640" viewBox="0 0 640 640" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">포트폴리오 프로필 일러스트</title>
+  <desc id="desc">노트북 앞에서 웹 포트폴리오를 만드는 개발자를 추상적으로 표현한 그림</desc>
+  <rect width="640" height="640" rx="48" fill="#EEF2FF"/>
+  <circle cx="320" cy="200" r="92" fill="#2563EB" opacity="0.9"/>
+  <circle cx="288" cy="188" r="10" fill="white"/>
+  <circle cx="352" cy="188" r="10" fill="white"/>
+  <path d="M280 232C304 254 336 254 360 232" stroke="white" stroke-width="16" stroke-linecap="round"/>
+  <path d="M160 510C171 398 230 332 320 332C410 332 469 398 480 510H160Z" fill="#172033"/>
+  <rect x="144" y="430" width="352" height="120" rx="20" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="8"/>
+  <path d="M232 486H408" stroke="#2563EB" stroke-width="16" stroke-linecap="round"/>
+  <path d="M266 522H374" stroke="#14B8A6" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="142" cy="136" r="36" fill="#14B8A6" opacity="0.9"/>
+  <circle cx="516" cy="156" r="28" fill="#60A5FA" opacity="0.9"/>
+  <path d="M94 326L134 286L174 326L134 366L94 326Z" fill="#DBEAFE"/>
+  <path d="M466 324L506 284L546 324L506 364L466 324Z" fill="#CCFBF1"/>
+</svg>
