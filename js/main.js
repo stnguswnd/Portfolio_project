@@ -56,9 +56,17 @@ function toggleTheme() {
 
 function setMenuOpen(isOpen) {
   state.menuOpen = isOpen;
-  elements.navMenu.classList.toggle("active", isOpen);
-  elements.menuToggle.classList.toggle("active", isOpen);
-  document.body.classList.toggle("menu-open", isOpen);
+
+  if (isOpen) {
+    elements.navMenu.classList.add("active");
+    elements.menuToggle.classList.add("active");
+    document.body.classList.add("menu-open");
+  } else {
+    elements.navMenu.classList.remove("active");
+    elements.menuToggle.classList.remove("active");
+    document.body.classList.remove("menu-open");
+  }
+
   elements.menuToggle.setAttribute("aria-expanded", String(isOpen));
   elements.menuToggle.setAttribute(
     "aria-label",
