@@ -1,6 +1,8 @@
+//1. HTML 요소를 쉽게 찾기 위한 도구 만들기
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => document.querySelectorAll(selector);
 
+//2. 현재 화면 상태를 저장하는 state 만들기
 const state = {
   theme: localStorage.getItem("portfolio-theme") || getSystemTheme(),
   menuOpen: false,
@@ -11,6 +13,7 @@ const state = {
   projectError: "",
 };
 
+//3. 자주 쓰는 HTML 요소들을 elements에 저장하기
 const elements = {
   siteHeader: $("#siteHeader"),
   menuToggle: $("#menuToggle"),
@@ -29,6 +32,7 @@ const elements = {
 
 const githubUsername = document.body.dataset.githubUsername || "stnguswnd";
 
+//4. 다크모드 관련 함수
 function getSystemTheme() {
   return window.matchMedia("(prefers-color-scheme: dark)").matches
     ? "dark"
@@ -54,6 +58,7 @@ function toggleTheme() {
   applyTheme(nextTheme);
 }
 
+//5. 햄버거 메뉴 관련 함수
 function setMenuOpen(isOpen) {
   state.menuOpen = isOpen;
 
@@ -74,6 +79,7 @@ function setMenuOpen(isOpen) {
   );
 }
 
+//6. 스크롤 관련 함수 
 function handleMenuToggle() {
   setMenuOpen(!state.menuOpen);
 }
@@ -150,6 +156,7 @@ function setProjectStatus(status, errorMessage = "") {
   renderProjectStatus();
 }
 
+// 7. 깃헙 API 관련 함수
 function renderProjectStatus() {
   const statusMessages = {
     idle: "",
@@ -248,6 +255,7 @@ function getLanguages() {
   return ["all", ...new Set(state.projects.map(({ language }) => language))];
 }
 
+// 8. 프로젝트 필더링 함수 
 function renderFilters() {
   const languages = getLanguages();
 
@@ -316,6 +324,7 @@ function handleFilterClick(event) {
   renderProjects();
 }
 
+//9. Contact 폼 검증 함수
 function validateField(field) {
   const value = field.value.trim();
   const errorElement = $(`#${field.id}Error`);
@@ -372,6 +381,7 @@ function handleProjectRetry(event) {
   }
 }
 
+//10. 이벤트 연결 함수
 function bindEvents() {
   elements.menuToggle.addEventListener("click", handleMenuToggle);
   elements.themeToggle.addEventListener("click", toggleTheme);
@@ -391,6 +401,7 @@ function bindEvents() {
   });
 }
 
+//11. init()으로 전체 실행 시작
 function init() {
   applyTheme(state.theme);
   bindEvents();
