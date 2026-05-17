@@ -275,6 +275,7 @@ async function fetchGitHubProjects() {
 
     const repos = await response.json();
     state.projects = repos
+    //repo.fork가 false인 저장소만 통과시킨다. 
       .filter((repo) => !repo.fork)
       .map(
         ({
@@ -294,7 +295,7 @@ async function fetchGitHubProjects() {
           stars: stargazers_count,
           updatedAt: updated_at,
         }),
-      )
+      )// starts 많은 순, starts가 많으면 updateAt이 최근인 순
       .sort(
         (first, second) =>
           second.stars - first.stars ||
@@ -309,7 +310,9 @@ async function fetchGitHubProjects() {
 
     state.filteredLanguage = "all";
     setProjectStatus("success");
+    // 언어 목록을 버튼 UI로 변환 
     renderFilters();
+    //선택한 언어의 프로젝트만 남기기
     renderProjects();
   } catch (error) {
     setProjectStatus("error", error.message);
@@ -340,6 +343,7 @@ function renderProjects() {
       state.filteredLanguage === "all" || language === state.filteredLanguage,
   );
 
+  //결과가 없으면 빈 상태 UI를 표시함. 
   if (filteredProjects.length === 0) {
     elements.projectList.innerHTML = `
       <div class="empty-card">
@@ -582,11 +586,17 @@ function bindEvents() {
 
 // 12. init()으로 전체 실행 시작
 function init() {
+  //테마 적용 
   applyTheme(state.theme);
+  //이벤트 연결
   bindEvents();
+  //섹션 관찰 시작 
   observeSections();
+  //타이핑 효과 시작 
   startTypingEffect();
+  //현재 스크롤 상태 반영
   handleScroll();
+  //요청시작 
   fetchGitHubProjects();
 }
 
