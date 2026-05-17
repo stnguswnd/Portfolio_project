@@ -1,19 +1,25 @@
-//1. HTML 요소를 쉽게 찾기 위한 도구 만들기
+// 1. HTML 요소를 쉽게 찾기 위한 도구 만들기
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => document.querySelectorAll(selector);
 
-//2. 현재 화면 상태를 저장하는 state 만들기
+const THEME_STORAGE_KEY = "portfolio-theme";
+const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+const systemThemeMedia = window.matchMedia("(prefers-color-scheme: dark)");
+
+// 2. 현재 화면 상태를 저장하는 state 만들기
 const state = {
-  theme: localStorage.getItem("portfolio-theme") || getSystemTheme(),
+  theme: savedTheme || getSystemTheme(),
+  themeSource: savedTheme ? "manual" : "system",
   menuOpen: false,
   navScrolled: false,
   projects: [],
   filteredLanguage: "all",
   projectStatus: "idle",
   projectError: "",
+  formSubmitting: false,
 };
 
-//3. 자주 쓰는 HTML 요소들을 elements에 저장하기
+// 3. 자주 쓰는 HTML 요소들을 elements에 저장하기
 const elements = {
   siteHeader: $("#siteHeader"),
   menuToggle: $("#menuToggle"),
@@ -22,43 +28,61 @@ const elements = {
   themeToggle: $("#themeToggle"),
   themeIcon: $("#themeIcon"),
   themeLabel: $("#themeLabel"),
+  typedHeadline: $("#typedHeadline"),
   scrollTopBtn: $("#scrollTopBtn"),
   projectFilters: $("#projectFilters"),
   projectStatus: $("#projectStatus"),
   projectList: $("#projectList"),
   contactForm: $("#contactForm"),
+  contactSubmit: $("#contactSubmit"),
   formResult: $("#formResult"),
 };
 
 const githubUsername = document.body.dataset.githubUsername || "stnguswnd";
 
-//4. 다크모드 관련 함수
+// 4. 다크 모드 관련 함수
 function getSystemTheme() {
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
+  return systemThemeMedia.matches ? "dark" : "light";
 }
 
-function applyTheme(theme) {
+function applyTheme(theme, options = {}) {
+  const { persist = false } = options;
+
   state.theme = theme;
   document.documentElement.setAttribute("data-theme", theme);
-  localStorage.setItem("portfolio-theme", theme);
+
+  if (persist) {
+    state.themeSource = "manual";
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  }
 
   const isDark = theme === "dark";
+  const sourceText = state.themeSource === "system" ? "시스템 설정 기준" : "사용자 설정 기준";
+
   elements.themeIcon.textContent = isDark ? "☀️" : "🌙";
   elements.themeLabel.textContent = isDark ? "Light" : "Dark";
   elements.themeToggle.setAttribute(
     "aria-label",
     isDark ? "라이트 모드로 전환" : "다크 모드로 전환",
   );
+  elements.themeToggle.title = `현재 테마: ${isDark ? "다크" : "라이트"} (${sourceText})`;
 }
 
 function toggleTheme() {
   const nextTheme = state.theme === "dark" ? "light" : "dark";
+  applyTheme(nextTheme, { persist: true });
+}
+
+function handleSystemThemeChange(event) {
+  if (state.themeSource !== "system") {
+    return;
+  }
+
+  const nextTheme = event.matches ? "dark" : "light";
   applyTheme(nextTheme);
 }
 
-//5. 햄버거 메뉴 관련 함수
+// 5. 햄버거 메뉴 관련 함수
 function setMenuOpen(isOpen) {
   state.menuOpen = isOpen;
 
@@ -79,11 +103,11 @@ function setMenuOpen(isOpen) {
   );
 }
 
-//6. 스크롤 관련 함수 
 function handleMenuToggle() {
   setMenuOpen(!state.menuOpen);
 }
 
+// 6. 스크롤 관련 함수
 function handleSmoothScroll(event) {
   const href = event.currentTarget.getAttribute("href");
 
@@ -150,13 +174,55 @@ function observeSections() {
   $$("[data-observe]").forEach((section) => observer.observe(section));
 }
 
+// 7. 타이핑 효과 관련 함수
+function startTypingEffect() {
+  const headline = elements.typedHeadline;
+
+  if (!headline) {
+    return;
+  }
+
+  const text = headline.dataset.typingText || headline.textContent.trim();
+  const shouldReduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  headline.setAttribute("aria-label", text);
+
+  if (shouldReduceMotion) {
+    headline.textContent = text;
+    headline.classList.add("typing-done");
+    return;
+  }
+
+  const characters = Array.from(text);
+  let index = 0;
+
+  headline.textContent = "";
+  headline.classList.remove("typing-done");
+
+  function typeNextCharacter() {
+    headline.textContent += characters[index] || "";
+    index += 1;
+
+    if (index < characters.length) {
+      window.setTimeout(typeNextCharacter, 65);
+      return;
+    }
+
+    window.setTimeout(() => {
+      headline.classList.add("typing-done");
+    }, 700);
+  }
+
+  typeNextCharacter();
+}
+
+// 8. GitHub API 관련 함수
 function setProjectStatus(status, errorMessage = "") {
   state.projectStatus = status;
   state.projectError = errorMessage;
   renderProjectStatus();
 }
 
-// 7. 깃헙 API 관련 함수
 function renderProjectStatus() {
   const statusMessages = {
     idle: "",
@@ -179,7 +245,7 @@ function renderProjectStatus() {
     `,
     error: `
       <div class="status-box error">
-        <span>${state.projectError}</span>
+        <span>${escapeHtml(state.projectError)}</span>
         <button class="retry-button" type="button" data-retry-projects>다시 시도</button>
       </div>
     `,
@@ -255,7 +321,7 @@ function getLanguages() {
   return ["all", ...new Set(state.projects.map(({ language }) => language))];
 }
 
-// 8. 프로젝트 필더링 함수 
+// 9. 프로젝트 필터링 함수
 function renderFilters() {
   const languages = getLanguages();
 
@@ -263,7 +329,7 @@ function renderFilters() {
     .map((language) => {
       const label = language === "all" ? "전체" : language;
       const isActive = state.filteredLanguage === language;
-      return `<button class="filter-button ${isActive ? "active" : ""}" type="button" data-language="${language}">${label}</button>`;
+      return `<button class="filter-button ${isActive ? "active" : ""}" type="button" data-language="${escapeHtml(language)}" aria-pressed="${String(isActive)}">${escapeHtml(label)}</button>`;
     })
     .join("");
 }
@@ -288,14 +354,14 @@ function renderProjects() {
     .map(
       ({ name, description, url, homepage, language, stars, updatedAt }) => `
         <article class="project-card">
-          <h3>${name}</h3>
-          <p>${description}</p>
+          <h3>${escapeHtml(name)}</h3>
+          <p>${escapeHtml(description)}</p>
           <div class="project-meta">
-            <span>${language}</span>
+            <span>${escapeHtml(language)}</span>
             <span>★ ${stars}</span>
             <span>${formatDate(updatedAt)}</span>
           </div>
-          <a class="project-link" href="${homepage || url}" target="_blank" rel="noopener noreferrer">
+          <a class="project-link" href="${getSafeUrl(homepage || url)}" target="_blank" rel="noopener noreferrer">
             프로젝트 열기 →
           </a>
         </article>
@@ -324,8 +390,29 @@ function handleFilterClick(event) {
   renderProjects();
 }
 
-//9. Contact 폼 검증 함수
+function escapeHtml(value) {
+  const htmlMap = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;",
+  };
+
+  return String(value).replace(/[&<>"']/g, (character) => htmlMap[character]);
+}
+
+function getSafeUrl(url) {
+  const text = String(url || "").trim();
+  return text.startsWith("https://") || text.startsWith("http://") ? escapeHtml(text) : "#";
+}
+
+// 10. Contact 폼 검증 및 실제 전송 함수
 function validateField(field) {
+  if (!field.id) {
+    return true;
+  }
+
   const value = field.value.trim();
   const errorElement = $(`#${field.id}Error`);
   const fieldWrapper = field.closest(".form-field");
@@ -337,8 +424,14 @@ function validateField(field) {
     message = "올바른 이메일 형식으로 입력해 주세요.";
   }
 
-  errorElement.textContent = message;
-  fieldWrapper.classList.toggle("invalid", Boolean(message));
+  if (errorElement) {
+    errorElement.textContent = message;
+  }
+
+  if (fieldWrapper) {
+    fieldWrapper.classList.toggle("invalid", Boolean(message));
+  }
+
   field.setAttribute("aria-invalid", String(Boolean(message)));
 
   return !message;
@@ -351,28 +444,108 @@ function isValidEmail(email) {
 function handleFormInput(event) {
   if (event.target.matches("input, textarea")) {
     validateField(event.target);
-    elements.formResult.textContent = "";
+    setFormResult("", false);
   }
 }
 
-function handleFormSubmit(event) {
+async function handleFormSubmit(event) {
   event.preventDefault();
 
-  const fields = [...elements.contactForm.querySelectorAll("input, textarea")];
+  const fields = [...elements.contactForm.querySelectorAll('input:not([type="hidden"]), textarea')];
   const isValid = fields.map(validateField).every(Boolean);
 
   if (!isValid) {
-    elements.formResult.textContent = "";
+    setFormResult("", false);
     return;
   }
 
   const formData = new FormData(elements.contactForm);
-  const formValues = Object.fromEntries(formData.entries());
-  const { name } = formValues;
 
-  elements.formResult.textContent = `${name}님, 메시지가 정상적으로 확인되었습니다.`;
-  elements.contactForm.reset();
-  fields.forEach((field) => field.setAttribute("aria-invalid", "false"));
+  try {
+    setFormSubmitting(true);
+    setFormResult("메시지를 전송하는 중입니다...", false);
+    await submitContactForm(formData);
+
+    const name = formData.get("name");
+    setFormResult(`${name}님, 메시지가 정상적으로 전송되었습니다.`, false);
+    elements.contactForm.reset();
+    clearFormErrors(fields);
+  } catch (error) {
+    setFormResult(error.message, true);
+  } finally {
+    setFormSubmitting(false);
+  }
+}
+
+async function submitContactForm(formData) {
+  const endpoint = getFormEndpoint();
+
+  if (!endpoint) {
+    throw new Error(
+      "Formspree 주소가 아직 설정되지 않았습니다. form의 action 값을 본인 Formspree 주소로 바꿔 주세요.",
+    );
+  }
+
+  const response = await fetch(endpoint, {
+    method: "POST",
+    body: formData,
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(await getFormErrorMessage(response));
+  }
+}
+
+function getFormEndpoint() {
+  const endpoint = elements.contactForm.getAttribute("action") || "";
+
+  if (!endpoint || endpoint.includes("your-form-id")) {
+    return "";
+  }
+
+  return endpoint;
+}
+
+async function getFormErrorMessage(response) {
+  try {
+    const data = await response.json();
+    const firstError = data.errors?.[0]?.message;
+    return firstError || "메시지 전송에 실패했습니다. 잠시 후 다시 시도해 주세요.";
+  } catch {
+    return "메시지 전송에 실패했습니다. 잠시 후 다시 시도해 주세요.";
+  }
+}
+
+function setFormSubmitting(isSubmitting) {
+  state.formSubmitting = isSubmitting;
+  elements.contactForm.classList.toggle("is-submitting", isSubmitting);
+  elements.contactSubmit.disabled = isSubmitting;
+  elements.contactSubmit.textContent = isSubmitting ? "전송 중..." : "메시지 전송";
+}
+
+function setFormResult(message, isError) {
+  elements.formResult.textContent = message;
+  elements.formResult.classList.toggle("error", isError);
+}
+
+function clearFormErrors(fields) {
+  fields.forEach((field) => {
+    const errorElement = $(`#${field.id}Error`);
+    const fieldWrapper = field.closest(".form-field");
+
+    field.setAttribute("aria-invalid", "false");
+
+    if (errorElement) {
+      errorElement.textContent = "";
+    }
+
+    if (fieldWrapper) {
+      fieldWrapper.classList.remove("invalid");
+    }
+  });
 }
 
 function handleProjectRetry(event) {
@@ -381,7 +554,7 @@ function handleProjectRetry(event) {
   }
 }
 
-//10. 이벤트 연결 함수
+// 11. 이벤트 연결 함수
 function bindEvents() {
   elements.menuToggle.addEventListener("click", handleMenuToggle);
   elements.themeToggle.addEventListener("click", toggleTheme);
@@ -399,13 +572,20 @@ function bindEvents() {
       setMenuOpen(false);
     }
   });
+
+  if (systemThemeMedia.addEventListener) {
+    systemThemeMedia.addEventListener("change", handleSystemThemeChange);
+  } else {
+    systemThemeMedia.addListener(handleSystemThemeChange);
+  }
 }
 
-//11. init()으로 전체 실행 시작
+// 12. init()으로 전체 실행 시작
 function init() {
   applyTheme(state.theme);
   bindEvents();
   observeSections();
+  startTypingEffect();
   handleScroll();
   fetchGitHubProjects();
 }

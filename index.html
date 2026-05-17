@@ -16,9 +16,7 @@
 
     <header class="site-header" id="siteHeader">
       <nav class="nav container" aria-label="주요 메뉴">
-        <a class="logo" href="#hero" aria-label="홈 섹션으로 이동"
-          >MyPortfolio</a
-        >
+        <a class="logo" href="#hero" aria-label="홈 섹션으로 이동">MyPortfolio</a>
 
         <button
           class="menu-toggle"
@@ -60,7 +58,11 @@
         <div class="container hero-grid">
           <div class="hero-content">
             <p class="eyebrow">Web Core & Front-end Portfolio</p>
-            <h1>
+            <h1
+              class="typing-title"
+              id="typedHeadline"
+              data-typing-text="안녕하세요. 화면과 데이터를 연결하는 프론트엔드 학습자입니다."
+            >
               안녕하세요. 화면과 데이터를 연결하는 프론트엔드 학습자입니다.
             </h1>
             <p class="hero-description">
@@ -79,8 +81,10 @@
             <ul>
               <li>반응형 레이아웃</li>
               <li>GitHub API 연동</li>
-              <li>다크 모드 저장</li>
-              <li>폼 유효성 검사</li>
+              <li>언어별 프로젝트 필터</li>
+              <li>타이핑 효과</li>
+              <li>시스템 다크 모드 감지</li>
+              <li>Formspree 폼 전송 준비</li>
             </ul>
           </aside>
         </div>
@@ -161,7 +165,7 @@
             <h2>GitHub API로 불러온 프로젝트</h2>
             <p class="section-description">
               저장소 데이터는 JavaScript에서 동적으로 렌더링됩니다. 언어 필터는
-              선택 보너스 기능입니다.
+              array.filter()를 사용한 보너스 기능입니다.
             </p>
           </div>
 
@@ -190,11 +194,19 @@
             <p class="eyebrow">Contact</p>
             <h2>문의 내용을 남겨주세요.</h2>
             <p class="section-description">
-              실제 전송 대신 유효성 검사를 통과하면 성공 메시지를 표시합니다.
+              Formspree 엔드포인트를 설정하면 유효성 검사를 통과한 메시지를 실제 이메일로 전송합니다.
             </p>
           </div>
 
-          <form class="contact-form" id="contactForm" novalidate>
+          <form
+            class="contact-form"
+            id="contactForm"
+            action="https://formspree.io/f/xkoewpgd"
+            method="POST"
+            novalidate
+          >
+            <input type="hidden" name="_subject" value="포트폴리오 문의가 도착했습니다." />
+
             <div class="form-field">
               <label for="name">이름</label>
               <input
@@ -230,9 +242,12 @@
               <p class="field-error" id="messageError"></p>
             </div>
 
-            <button class="button primary full" type="submit">
-              메시지 확인
+            <button class="button primary full" id="contactSubmit" type="submit">
+              메시지 전송
             </button>
+            <p class="form-help">
+              실제 전송을 사용하려면 form의 action 값을 본인 Formspree 주소로 바꾸세요.
+            </p>
             <p
               class="form-result"
               id="formResult"
@@ -244,7 +259,7 @@
       </section>
     </main>
 
-    <button
+    <buttonf
       class="scroll-top"
       id="scrollTopBtn"
       type="button"
